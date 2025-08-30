@@ -14,9 +14,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libx11-dev libxft-dev libgl1-mesa-dev libglu1-mesa-dev cmake curl
-          curl -L https://github.com/fltk/fltk/archive/refs/tags/release-1.4.0.tar.gz | tar xz
-          mv fltk-release-1.4.0 fltk-src
+          sudo apt-get install -y build-essential libx11-dev libxft-dev libgl1-mesa-dev libglu1-mesa-dev cmake git
+          git clone --depth 1 --branch release-1.4.4 https://github.com/fltk/fltk.git fltk-src
           cmake -S fltk-src -B fltk-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/fltk \
             -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF -DOPTION_BUILD_FLUID=OFF \
             -DOPTION_USE_SYSTEM_LIBJPEG=OFF -DOPTION_USE_SYSTEM_LIBPNG=OFF -DOPTION_USE_SYSTEM_ZLIB=OFF \
@@ -27,9 +26,9 @@ jobs:
       - name: Configure
         run: |
           cmake -S . -B build \
+            -DCMAKE_PREFIX_PATH=$GITHUB_WORKSPACE/fltk \
             -DFLTKINCDIR=$GITHUB_WORKSPACE/fltk/include \
-            -DFLTKLIBDIR=$GITHUB_WORKSPACE/fltk \
-            -DFLTK_DIR=$GITHUB_WORKSPACE/fltk/lib/cmake/FLTK
+            -DFLTKLIBDIR=$GITHUB_WORKSPACE/fltk
       - name: Build
         run: cmake --build build --config Release
       - name: Upload artifact
@@ -50,8 +49,7 @@ jobs:
       - name: Install dependencies
         run: |
           brew install pkg-config
-          curl -L https://github.com/fltk/fltk/archive/refs/tags/release-1.4.0.tar.gz | tar xz
-          mv fltk-release-1.4.0 fltk-src
+          git clone --depth 1 --branch release-1.4.4 https://github.com/fltk/fltk.git fltk-src
           cmake -S fltk-src -B fltk-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/fltk \
             -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF -DOPTION_BUILD_FLUID=OFF \
             -DOPTION_USE_SYSTEM_LIBJPEG=OFF -DOPTION_USE_SYSTEM_LIBPNG=OFF -DOPTION_USE_SYSTEM_ZLIB=OFF \
@@ -62,9 +60,9 @@ jobs:
       - name: Configure
         run: |
           cmake -S . -B build \
+            -DCMAKE_PREFIX_PATH=$GITHUB_WORKSPACE/fltk \
             -DFLTKINCDIR=$GITHUB_WORKSPACE/fltk/include \
             -DFLTKLIBDIR=$GITHUB_WORKSPACE/fltk \
-            -DFLTK_DIR=$GITHUB_WORKSPACE/fltk/lib/cmake/FLTK \
             -DMACOS_VERSION=$MACOSX_DEPLOYMENT_TARGET
       - name: Build
         run: cmake --build build --config Release
@@ -85,9 +83,7 @@ jobs:
         shell: pwsh
         run: |
           choco install cmake -y
-          Invoke-WebRequest -Uri https://github.com/fltk/fltk/archive/refs/tags/release-1.4.0.tar.gz -OutFile fltk.tar.gz
-          tar -xf fltk.tar.gz
-          Rename-Item fltk-release-1.4.0 fltk-src
+          git clone --depth 1 --branch release-1.4.4 https://github.com/fltk/fltk.git fltk-src
           cmake -S fltk-src -B fltk-build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE/fltk" `
             -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF -DOPTION_BUILD_FLUID=OFF `
             -DOPTION_USE_SYSTEM_LIBJPEG=OFF -DOPTION_USE_SYSTEM_LIBPNG=OFF -DOPTION_USE_SYSTEM_ZLIB=OFF `
@@ -97,7 +93,7 @@ jobs:
           Get-ChildItem $env:GITHUB_WORKSPACE\fltk\lib
       - name: Configure
         shell: pwsh
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DFLTKINCDIR=$env:GITHUB_WORKSPACE\fltk\include -DFLTKLIBDIR=$env:GITHUB_WORKSPACE\fltk -DFLTK_DIR=$env:GITHUB_WORKSPACE\fltk\lib\cmake\FLTK
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH=$env:GITHUB_WORKSPACE\fltk -DFLTKINCDIR=$env:GITHUB_WORKSPACE\fltk\include -DFLTKLIBDIR=$env:GITHUB_WORKSPACE\fltk
       - name: Build
         shell: pwsh
         run: cmake --build build --config Release
