@@ -10,6 +10,7 @@ jobs:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
 
@@ -24,7 +25,6 @@ jobs:
             sudo apt-get install -y build-essential libx11-dev libxft-dev cmake curl
           else
             brew update
-            brew install cmake
           fi
           curl -L https://github.com/fltk/fltk/archive/refs/tags/release-1.4.0.tar.gz | tar xz
           mv fltk-release-1.4.0 fltk-src
