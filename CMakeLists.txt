@@ -151,6 +151,7 @@ elseif(LINUX)
         Xft
         fontconfig
         Xrender
+        Xfixes
         X11
         pthread
         dl
@@ -183,15 +184,15 @@ endif()
 
 
 
-if(FALSE)
+if(LINUX)
     # Install binary
-    install(TARGETS tablecruncher RUNTIME DESTINATION bin)
+    install(TARGETS Tablecruncher RUNTIME DESTINATION bin)
 
     # Desktop entry
     install(FILES assets/linux/tablecruncher.desktop
         DESTINATION share/applications)
 
-    # App icon
+    # App icons
     install(FILES assets/linux/icons/64x64/tablecruncher.png
         DESTINATION share/icons/hicolor/64x64/apps)
 
@@ -200,6 +201,18 @@ if(FALSE)
 
     install(FILES assets/linux/icons/256x256/tablecruncher.png
         DESTINATION share/icons/hicolor/256x256/apps)
+
+    # CPack configuration for Debian package
+    set(CPACK_PACKAGE_NAME "tablecruncher")
+    set(CPACK_PACKAGE_VERSION "${APP_VERSION}")
+    set(CPACK_PACKAGE_CONTACT "Tablecruncher")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Tablecruncher")
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Fast CSV viewer and editor")
+    set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+    set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
+    set(CPACK_GENERATOR "DEB")
+    include(CPack)
 endif()
 
 

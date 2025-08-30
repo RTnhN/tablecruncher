@@ -1,0 +1,51 @@
+name: Build Linux
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake git libx11-dev libxft-dev libxrender-dev libxext-dev libxfixes-dev
+
+      - name: Clone FLTK
+        run: git clone https://github.com/fltk/fltk.git --branch release-1.4.4 --depth 1
+
+      - name: Build FLTK
+        run: |
+          cd fltk
+          ./autogen.sh
+          ./configure --enable-localzlib --disable-wayland
+          make -j$(nproc)
+
+      - name: Configure Tablecruncher
+        run: |
+          cmake -S . -B build -DFLTKDIR=${GITHUB_WORKSPACE}/fltk -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build Tablecruncher
+        run: cmake --build build -- -j$(nproc)
+
+      - name: Package Debian
+        run: bash scripts/build_deb.sh
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tablecruncher-linux
+          path: build/dist
+
+      - name: Upload Debian package
+        uses: actions/upload-artifact@v4
+        with:
+          name: tablecruncher-deb
+          path: Tablecruncher_v*_Linux_x86_64.deb

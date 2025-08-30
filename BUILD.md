@@ -109,4 +109,13 @@ Use `VS Studio C++` to build the application. Or use `cmake` in a "Developer Com
     cd ../scripts/
     ./build_appimage.sh
 
+## Build Debian package
+
+    cd build/
+    rm -rf *
+    cmake -DFLTKDIR="/home/sf/Documents/Builds/fltk-1.4.3" ..
+    cmake --build . -- -j$(nproc)
+    cd ../scripts/
+    ./build_deb.sh
+
 
