@@ -6,80 +6,93 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    env:
-      MACOSX_DEPLOYMENT_TARGET: "11.0"
-      MACOS_VERSION: "11.0"
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-
+  linux:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install dependencies (Linux or macOS)
-        if: runner.os != 'Windows'
+      - name: Install dependencies
         run: |
-          if [ "$RUNNER_OS" = "Linux" ]; then
-            sudo apt-get update
-            sudo apt-get install -y build-essential libx11-dev libxft-dev libgl1-mesa-dev libglu1-mesa-dev cmake curl
-          else
-            brew update
-          fi
+          sudo apt-get update
+          sudo apt-get install -y build-essential libx11-dev libxft-dev libgl1-mesa-dev libglu1-mesa-dev cmake curl
           curl -L https://github.com/fltk/fltk/archive/refs/tags/release-1.4.0.tar.gz | tar xz
           mv fltk-release-1.4.0 fltk-src
           cmake -S fltk-src -B fltk-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/fltk \
             -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF \
             -DOPTION_USE_SYSTEM_LIBJPEG=OFF -DOPTION_USE_SYSTEM_LIBPNG=OFF -DOPTION_USE_SYSTEM_ZLIB=OFF \
             -DFLTK_BUILD_JPEG=ON -DFLTK_BUILD_PNG=ON -DFLTK_BUILD_ZLIB=ON
-          cmake --build fltk-build --config Release
+          cmake --build fltk-build --config Release --target fltk fltk_forms fltk_gl fltk_images fltk_jpeg fltk_png fltk_z
           cmake --install fltk-build
           ls $GITHUB_WORKSPACE/fltk/lib
+      - name: Configure
+        run: cmake -S . -B build -DFLTKINCDIR=$GITHUB_WORKSPACE/fltk/include -DFLTKLIBDIR=$GITHUB_WORKSPACE/fltk -DFLTK_DIR=$GITHUB_WORKSPACE/fltk/lib/cmake/FLTK
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tablecruncher-linux
+          path: |
+            build/dist/Tablecruncher*
+            build/Tablecruncher*
 
-      - name: Install dependencies (Windows)
-        if: runner.os == 'Windows'
+  macos:
+    runs-on: macos-latest
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          brew install pkg-config
+          curl -L https://github.com/fltk/fltk/archive/refs/tags/release-1.4.0.tar.gz | tar xz
+          mv fltk-release-1.4.0 fltk-src
+          cmake -S fltk-src -B fltk-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/fltk \
+            -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF \
+            -DOPTION_USE_SYSTEM_LIBJPEG=OFF -DOPTION_USE_SYSTEM_LIBPNG=OFF -DOPTION_USE_SYSTEM_ZLIB=OFF \
+            -DFLTK_BUILD_JPEG=ON -DFLTK_BUILD_PNG=ON -DFLTK_BUILD_ZLIB=ON
+          cmake --build fltk-build --config Release --target fltk fltk_forms fltk_gl fltk_images fltk_jpeg fltk_png fltk_z
+          cmake --install fltk-build
+          ls $GITHUB_WORKSPACE/fltk/lib
+      - name: Configure
+        run: cmake -S . -B build -DFLTKINCDIR=$GITHUB_WORKSPACE/fltk/include -DFLTKLIBDIR=$GITHUB_WORKSPACE/fltk -DFLTK_DIR=$GITHUB_WORKSPACE/fltk/lib/cmake/FLTK -DMACOS_VERSION=$MACOSX_DEPLOYMENT_TARGET
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tablecruncher-macos
+          path: |
+            build/dist/Tablecruncher*
+            build/Tablecruncher*
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
         shell: pwsh
         run: |
           choco install cmake -y
           Invoke-WebRequest -Uri https://github.com/fltk/fltk/archive/refs/tags/release-1.4.0.tar.gz -OutFile fltk.tar.gz
           tar -xf fltk.tar.gz
           Rename-Item fltk-release-1.4.0 fltk-src
-          cmake -S fltk-src -B fltk-build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${env:GITHUB_WORKSPACE}/fltk" \
-            -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF \
-            -DOPTION_USE_SYSTEM_LIBJPEG=OFF -DOPTION_USE_SYSTEM_LIBPNG=OFF -DOPTION_USE_SYSTEM_ZLIB=OFF \
+          cmake -S fltk-src -B fltk-build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE/fltk" `
+            -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF `
+            -DOPTION_USE_SYSTEM_LIBJPEG=OFF -DOPTION_USE_SYSTEM_LIBPNG=OFF -DOPTION_USE_SYSTEM_ZLIB=OFF `
             -DFLTK_BUILD_JPEG=ON -DFLTK_BUILD_PNG=ON -DFLTK_BUILD_ZLIB=ON
-          cmake --build fltk-build --config Release
+          cmake --build fltk-build --config Release --target fltk fltk_forms fltk_gl fltk_images fltk_jpeg fltk_png fltk_z
           cmake --install fltk-build --config Release
           Get-ChildItem $env:GITHUB_WORKSPACE\fltk\lib
-
-      - name: Configure (Windows)
-        if: runner.os == 'Windows'
+      - name: Configure
         shell: pwsh
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 \
-          -DFLTKINCDIR=$env:GITHUB_WORKSPACE\fltk\include \
-          -DFLTKLIBDIR=$env:GITHUB_WORKSPACE\fltk \
-          -DFLTK_DIR=$env:GITHUB_WORKSPACE\fltk\lib\cmake\FLTK
-
-      - name: Configure (Linux or macOS)
-        if: runner.os != 'Windows'
-        run: |
-          if [ "$RUNNER_OS" = "macOS" ]; then
-            cmake -S . -B build -DFLTKINCDIR=$GITHUB_WORKSPACE/fltk/include -DFLTKLIBDIR=$GITHUB_WORKSPACE/fltk -DFLTK_DIR=$GITHUB_WORKSPACE/fltk/lib/cmake/FLTK -DMACOS_VERSION=$MACOSX_DEPLOYMENT_TARGET
-          else
-            cmake -S . -B build -DFLTKINCDIR=$GITHUB_WORKSPACE/fltk/include -DFLTKLIBDIR=$GITHUB_WORKSPACE/fltk -DFLTK_DIR=$GITHUB_WORKSPACE/fltk/lib/cmake/FLTK
-          fi
-
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DFLTKINCDIR=$env:GITHUB_WORKSPACE\fltk\include -DFLTKLIBDIR=$env:GITHUB_WORKSPACE\fltk -DFLTK_DIR=$env:GITHUB_WORKSPACE\fltk\lib\cmake\FLTK
       - name: Build
+        shell: pwsh
         run: cmake --build build --config Release
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tablecruncher-${{ matrix.os }}
+          name: tablecruncher-windows
           path: |
-            build/dist/Tablecruncher*
-            build/Release/Tablecruncher*
-            build/Tablecruncher*
+            build/Release/Tablecruncher*.exe
+            build/dist/Tablecruncher*.exe
