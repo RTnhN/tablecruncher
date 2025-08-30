@@ -1,0 +1,63 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies (Linux or macOS)
+        if: runner.os != 'Windows'
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y build-essential libx11-dev libxft-dev cmake curl
+          else
+            brew update
+            brew install cmake
+          fi
+          curl -L https://github.com/fltk/fltk/archive/refs/tags/release-1.4.0.tar.gz | tar xz
+          mv fltk-release-1.4.0 fltk-src
+          cmake -S fltk-src -B fltk-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/fltk -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF
+          cmake --build fltk-build --target install
+
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=1' -y
+          Invoke-WebRequest -Uri https://github.com/fltk/fltk/archive/refs/tags/release-1.4.0.tar.gz -OutFile fltk.tar.gz
+          tar -xf fltk.tar.gz
+          Rename-Item fltk-release-1.4.0 fltk-src
+          cmake -S fltk-src -B fltk-build -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$env:GITHUB_WORKSPACE\fltk -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF
+          cmake --build fltk-build --target install
+
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: cmake -S . -B build -DFLTKDIR=$env:GITHUB_WORKSPACE\fltk
+
+      - name: Configure (Linux or macOS)
+        if: runner.os != 'Windows'
+        run: cmake -S . -B build -DFLTKDIR=$GITHUB_WORKSPACE/fltk
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tablecruncher-${{ matrix.os }}
+          path: |
+            build/Release/Tablecruncher*
+            build/Tablecruncher*
