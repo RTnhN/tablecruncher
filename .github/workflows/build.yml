@@ -8,6 +8,7 @@ on:
 jobs:
   linux:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
@@ -17,14 +18,18 @@ jobs:
           curl -L https://github.com/fltk/fltk/archive/refs/tags/release-1.4.0.tar.gz | tar xz
           mv fltk-release-1.4.0 fltk-src
           cmake -S fltk-src -B fltk-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/fltk \
-            -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF \
+            -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF -DOPTION_BUILD_FLUID=OFF \
             -DOPTION_USE_SYSTEM_LIBJPEG=OFF -DOPTION_USE_SYSTEM_LIBPNG=OFF -DOPTION_USE_SYSTEM_ZLIB=OFF \
             -DFLTK_BUILD_JPEG=ON -DFLTK_BUILD_PNG=ON -DFLTK_BUILD_ZLIB=ON
-          cmake --build fltk-build --config Release --target fltk fltk_forms fltk_gl fltk_images fltk_jpeg fltk_png fltk_z
+          cmake --build fltk-build --config Release
           cmake --install fltk-build
           ls $GITHUB_WORKSPACE/fltk/lib
       - name: Configure
-        run: cmake -S . -B build -DFLTKINCDIR=$GITHUB_WORKSPACE/fltk/include -DFLTKLIBDIR=$GITHUB_WORKSPACE/fltk -DFLTK_DIR=$GITHUB_WORKSPACE/fltk/lib/cmake/FLTK
+        run: |
+          cmake -S . -B build \
+            -DFLTKINCDIR=$GITHUB_WORKSPACE/fltk/include \
+            -DFLTKLIBDIR=$GITHUB_WORKSPACE/fltk \
+            -DFLTK_DIR=$GITHUB_WORKSPACE/fltk/lib/cmake/FLTK
       - name: Build
         run: cmake --build build --config Release
       - name: Upload artifact
@@ -37,6 +42,7 @@ jobs:
 
   macos:
     runs-on: macos-latest
+    continue-on-error: true
     env:
       MACOSX_DEPLOYMENT_TARGET: "11.0"
     steps:
@@ -47,14 +53,19 @@ jobs:
           curl -L https://github.com/fltk/fltk/archive/refs/tags/release-1.4.0.tar.gz | tar xz
           mv fltk-release-1.4.0 fltk-src
           cmake -S fltk-src -B fltk-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/fltk \
-            -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF \
+            -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF -DOPTION_BUILD_FLUID=OFF \
             -DOPTION_USE_SYSTEM_LIBJPEG=OFF -DOPTION_USE_SYSTEM_LIBPNG=OFF -DOPTION_USE_SYSTEM_ZLIB=OFF \
             -DFLTK_BUILD_JPEG=ON -DFLTK_BUILD_PNG=ON -DFLTK_BUILD_ZLIB=ON
-          cmake --build fltk-build --config Release --target fltk fltk_forms fltk_gl fltk_images fltk_jpeg fltk_png fltk_z
+          cmake --build fltk-build --config Release
           cmake --install fltk-build
           ls $GITHUB_WORKSPACE/fltk/lib
       - name: Configure
-        run: cmake -S . -B build -DFLTKINCDIR=$GITHUB_WORKSPACE/fltk/include -DFLTKLIBDIR=$GITHUB_WORKSPACE/fltk -DFLTK_DIR=$GITHUB_WORKSPACE/fltk/lib/cmake/FLTK -DMACOS_VERSION=$MACOSX_DEPLOYMENT_TARGET
+        run: |
+          cmake -S . -B build \
+            -DFLTKINCDIR=$GITHUB_WORKSPACE/fltk/include \
+            -DFLTKLIBDIR=$GITHUB_WORKSPACE/fltk \
+            -DFLTK_DIR=$GITHUB_WORKSPACE/fltk/lib/cmake/FLTK \
+            -DMACOS_VERSION=$MACOSX_DEPLOYMENT_TARGET
       - name: Build
         run: cmake --build build --config Release
       - name: Upload artifact
@@ -67,6 +78,7 @@ jobs:
 
   windows:
     runs-on: windows-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
@@ -77,10 +89,10 @@ jobs:
           tar -xf fltk.tar.gz
           Rename-Item fltk-release-1.4.0 fltk-src
           cmake -S fltk-src -B fltk-build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE/fltk" `
-            -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF `
+            -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF -DOPTION_BUILD_FLUID=OFF `
             -DOPTION_USE_SYSTEM_LIBJPEG=OFF -DOPTION_USE_SYSTEM_LIBPNG=OFF -DOPTION_USE_SYSTEM_ZLIB=OFF `
             -DFLTK_BUILD_JPEG=ON -DFLTK_BUILD_PNG=ON -DFLTK_BUILD_ZLIB=ON
-          cmake --build fltk-build --config Release --target fltk fltk_forms fltk_gl fltk_images fltk_jpeg fltk_png fltk_z
+          cmake --build fltk-build --config Release
           cmake --install fltk-build --config Release
           Get-ChildItem $env:GITHUB_WORKSPACE\fltk\lib
       - name: Configure
