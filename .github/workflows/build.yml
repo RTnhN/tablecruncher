@@ -31,7 +31,7 @@ jobs:
           fi
           curl -L https://github.com/fltk/fltk/archive/refs/tags/release-1.4.0.tar.gz | tar xz
           mv fltk-release-1.4.0 fltk-src
-          cmake -S fltk-src -B fltk-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/fltk -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF
+          cmake -S fltk-src -B fltk-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/fltk -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF -DOPTION_USE_SYSTEM_LIBJPEG=OFF -DOPTION_USE_SYSTEM_LIBPNG=OFF -DOPTION_USE_SYSTEM_ZLIB=OFF
           cmake --build fltk-build --config Release
           cmake --install fltk-build
 
@@ -43,7 +43,7 @@ jobs:
           Invoke-WebRequest -Uri https://github.com/fltk/fltk/archive/refs/tags/release-1.4.0.tar.gz -OutFile fltk.tar.gz
           tar -xf fltk.tar.gz
           Rename-Item fltk-release-1.4.0 fltk-src
-          cmake -S fltk-src -B fltk-build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$env:GITHUB_WORKSPACE\fltk -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF
+          cmake -S fltk-src -B fltk-build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${env:GITHUB_WORKSPACE}/fltk" -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF -DOPTION_USE_SYSTEM_LIBJPEG=OFF -DOPTION_USE_SYSTEM_LIBPNG=OFF -DOPTION_USE_SYSTEM_ZLIB=OFF
           cmake --build fltk-build --config Release
           cmake --install fltk-build --config Release
 
