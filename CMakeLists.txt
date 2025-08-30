@@ -186,7 +186,7 @@ endif()
 
 if(LINUX)
     # Install binary
-    install(TARGETS tablecruncher RUNTIME DESTINATION bin)
+    install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 
     # Desktop entry
     install(FILES assets/linux/tablecruncher.desktop
