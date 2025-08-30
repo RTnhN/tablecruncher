@@ -1,0 +1,38 @@
+name: Build macOS
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone FLTK
+        run: git clone https://github.com/fltk/fltk.git --branch release-1.4.4 --depth 1
+
+      - name: Build FLTK
+        run: |
+          cd fltk
+          export MIN_MAC_VERSION=10.15
+          ./configure CFLAGS="-mmacosx-version-min=$MIN_MAC_VERSION" CXXFLAGS="-mmacosx-version-min=$MIN_MAC_VERSION" LDFLAGS="-mmacosx-version-min=$MIN_MAC_VERSION" --enable-localzlib
+          make -j$(sysctl -n hw.ncpu)
+
+      - name: Configure Tablecruncher
+        run: |
+          export MIN_MAC_VERSION=10.15
+          cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -DFLTKDIR=$GITHUB_WORKSPACE/fltk -DMACOS_VERSION=$MIN_MAC_VERSION
+
+      - name: Build Tablecruncher
+        run: cmake --build build --config Release -- -j$(sysctl -n hw.ncpu)
+
+      - name: Create bundle
+        run: cmake --build build --config Release --target create_bundle -- -j$(sysctl -n hw.ncpu)
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tablecruncher-macos
+          path: build/dist
