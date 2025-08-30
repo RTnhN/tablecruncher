@@ -151,6 +151,7 @@ elseif(LINUX)
         Xft
         fontconfig
         Xrender
+        Xfixes
         X11
         pthread
         dl
