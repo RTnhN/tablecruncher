@@ -11,6 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       MACOSX_DEPLOYMENT_TARGET: "11.0"
+      MACOS_VERSION: "11.0"
     strategy:
       fail-fast: false
       matrix:
@@ -30,7 +31,7 @@ jobs:
           fi
           curl -L https://github.com/fltk/fltk/archive/refs/tags/release-1.4.0.tar.gz | tar xz
           mv fltk-release-1.4.0 fltk-src
-          cmake -S fltk-src -B fltk-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/fltk -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF
+          cmake -S fltk-src -B fltk-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=ON -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/fltk -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF
           cmake --build fltk-build --target install
 
       - name: Install dependencies (Windows)
@@ -41,17 +42,22 @@ jobs:
           Invoke-WebRequest -Uri https://github.com/fltk/fltk/archive/refs/tags/release-1.4.0.tar.gz -OutFile fltk.tar.gz
           tar -xf fltk.tar.gz
           Rename-Item fltk-release-1.4.0 fltk-src
-          cmake -S fltk-src -B fltk-build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$env:GITHUB_WORKSPACE\fltk -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF
+          cmake -S fltk-src -B fltk-build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=ON -DCMAKE_INSTALL_PREFIX=$env:GITHUB_WORKSPACE\fltk -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF
           cmake --build fltk-build --config Release --target install
 
       - name: Configure (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DFLTKDIR=$env:GITHUB_WORKSPACE\fltk
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DFLTKINCDIR=$env:GITHUB_WORKSPACE\fltk\include -DFLTKLIBDIR=$env:GITHUB_WORKSPACE\fltk
 
       - name: Configure (Linux or macOS)
         if: runner.os != 'Windows'
-        run: cmake -S . -B build -DFLTKDIR=$GITHUB_WORKSPACE/fltk
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            cmake -S . -B build -DFLTKINCDIR=$GITHUB_WORKSPACE/fltk/include -DFLTKLIBDIR=$GITHUB_WORKSPACE/fltk -DMACOS_VERSION=$MACOSX_DEPLOYMENT_TARGET
+          else
+            cmake -S . -B build -DFLTKINCDIR=$GITHUB_WORKSPACE/fltk/include -DFLTKLIBDIR=$GITHUB_WORKSPACE/fltk
+          fi
 
       - name: Build
         run: cmake --build build --config Release
@@ -61,5 +67,6 @@ jobs:
         with:
           name: tablecruncher-${{ matrix.os }}
           path: |
+            build/dist/Tablecruncher*
             build/Release/Tablecruncher*
             build/Tablecruncher*
