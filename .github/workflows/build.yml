@@ -80,7 +80,10 @@ jobs:
         run: |
           choco install cmake -y
           git clone --depth 1 --branch release-1.4.4 https://github.com/fltk/fltk.git fltk-src
-          cmake -S fltk-src -B fltk-build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE/fltk" `
+          $prefix = "$env:GITHUB_WORKSPACE\fltk"
+          cmake -S fltk-src -B fltk-build -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_INSTALL_PREFIX="$prefix" `
             -DOPTION_BUILD_EXAMPLES=OFF -DOPTION_BUILD_TEST=OFF -DOPTION_BUILD_FLUID=OFF `
             -DOPTION_USE_SYSTEM_LIBJPEG=OFF -DOPTION_USE_SYSTEM_LIBPNG=OFF -DOPTION_USE_SYSTEM_ZLIB=OFF `
             -DFLTK_BUILD_JPEG=ON -DFLTK_BUILD_PNG=ON -DFLTK_BUILD_ZLIB=ON
@@ -88,7 +91,11 @@ jobs:
           cmake --install fltk-build --config Release
       - name: Configure
         shell: pwsh
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH=$env:GITHUB_WORKSPACE\fltk -DFLTK_DIR=$env:GITHUB_WORKSPACE\fltk\lib\cmake\FLTK
+        run: |
+          $prefix = "$env:GITHUB_WORKSPACE\fltk"
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_PREFIX_PATH="$prefix" `
+            -DFLTK_DIR="$prefix\lib\cmake\FLTK"
       - name: Build
         shell: pwsh
         run: cmake --build build --config Release
