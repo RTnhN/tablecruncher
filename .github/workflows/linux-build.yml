@@ -24,6 +24,7 @@ jobs:
       - name: Build FLTK
         run: |
           cd fltk
+          ./autogen.sh
           ./configure --enable-localzlib --disable-wayland
           make -j$(nproc)
 
