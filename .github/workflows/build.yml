@@ -23,12 +23,12 @@ jobs:
           cmake --build fltk-build --config Release
           cmake --install fltk-build
           ls $GITHUB_WORKSPACE/fltk/lib
+          ls $GITHUB_WORKSPACE/fltk/lib/cmake/FLTK
       - name: Configure
         run: |
           cmake -S . -B build \
             -DCMAKE_PREFIX_PATH=$GITHUB_WORKSPACE/fltk \
-            -DFLTKINCDIR=$GITHUB_WORKSPACE/fltk/include \
-            -DFLTKLIBDIR=$GITHUB_WORKSPACE/fltk
+            -DFLTK_DIR=$GITHUB_WORKSPACE/fltk/lib/cmake/FLTK
       - name: Build
         run: cmake --build build --config Release
       - name: Upload artifact
@@ -57,12 +57,12 @@ jobs:
           cmake --build fltk-build --config Release
           cmake --install fltk-build
           ls $GITHUB_WORKSPACE/fltk/lib
+          ls $GITHUB_WORKSPACE/fltk/lib/cmake/FLTK
       - name: Configure
         run: |
           cmake -S . -B build \
             -DCMAKE_PREFIX_PATH=$GITHUB_WORKSPACE/fltk \
-            -DFLTKINCDIR=$GITHUB_WORKSPACE/fltk/include \
-            -DFLTKLIBDIR=$GITHUB_WORKSPACE/fltk \
+            -DFLTK_DIR=$GITHUB_WORKSPACE/fltk/lib/cmake/FLTK \
             -DMACOS_VERSION=$MACOSX_DEPLOYMENT_TARGET
       - name: Build
         run: cmake --build build --config Release
@@ -91,9 +91,10 @@ jobs:
           cmake --build fltk-build --config Release
           cmake --install fltk-build --config Release
           Get-ChildItem $env:GITHUB_WORKSPACE\fltk\lib
+          Get-ChildItem $env:GITHUB_WORKSPACE\fltk\lib\cmake\FLTK
       - name: Configure
         shell: pwsh
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH=$env:GITHUB_WORKSPACE\fltk -DFLTKINCDIR=$env:GITHUB_WORKSPACE\fltk\include -DFLTKLIBDIR=$env:GITHUB_WORKSPACE\fltk
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH=$env:GITHUB_WORKSPACE\fltk -DFLTK_DIR=$env:GITHUB_WORKSPACE\fltk\lib\cmake\FLTK
       - name: Build
         shell: pwsh
         run: cmake --build build --config Release

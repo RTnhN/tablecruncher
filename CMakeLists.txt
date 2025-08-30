@@ -28,28 +28,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Optional: single combined FLTKDIR
-set(FLTKDIR "" CACHE PATH "Optional root path to FLTK (used if FLTKINCDIR and FLTKLIBDIR are not set)")
-
-# FLTKINCDIR and FLTKLIBDIR (can override FLTKDIR)
-set(FLTKINCDIR "" CACHE PATH "Path to FLTK include directory (optional if FLTKDIR is set)")
-set(FLTKLIBDIR "" CACHE PATH "Path to FLTK lib directory (optional if FLTKDIR is set)")
-
-# Fallback logic
-if(NOT FLTKINCDIR)
-    if(FLTKDIR)
-        set(FLTKINCDIR ${FLTKDIR})
-    else()
-        message(FATAL_ERROR "Please set either FLTKINCDIR or FLTKDIR.")
-    endif()
-endif()
-
-if(NOT FLTKLIBDIR)
-    if(FLTKDIR)
-        set(FLTKLIBDIR ${FLTKDIR})
-    else()
-        message(FATAL_ERROR "Please set either FLTKLIBDIR or FLTKDIR.")
-    endif()
-endif()
+find_package(FLTK 1.4 CONFIG REQUIRED)
 
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -112,7 +91,7 @@ set(SOURCES
     ${EXTERNAL}/duktape/duktape.c
 )
 
-include_directories(${SRCDIR} ${EXTERNAL} ${FLTKINCDIR} ${FLTKLIBDIR})
+include_directories(${SRCDIR} ${EXTERNAL})
 
 if(WIN32)
     add_executable(${PROJECT_NAME} WIN32 ${SOURCES})
@@ -121,6 +100,8 @@ else()
 endif()
 
 # Link libraries
+target_link_libraries(${PROJECT_NAME} PRIVATE fltk::fltk fltk::images fltk::z)
+
 if(APPLE)
     if(ARCH STREQUAL "arm")
         target_link_libraries(${PROJECT_NAME} PRIVATE
@@ -128,26 +109,13 @@ if(APPLE)
             "-weak_framework UniformTypeIdentifiers"
         )
     else()
-        target_link_libraries(${PROJECT_NAME} PRIVATE
-            "-framework Cocoa"
-        )
+        target_link_libraries(${PROJECT_NAME} PRIVATE "-framework Cocoa")
     endif()
-    target_link_libraries(${PROJECT_NAME} PRIVATE
-        ${FLTKLIBDIR}/lib/libfltk.a
-        ${FLTKLIBDIR}/lib/libfltk_images.a
-        ${FLTKLIBDIR}/lib/libfltk_z.a
-    )
 elseif(WIN32)
-    set(FLTK_DIR ${FLTKLIBDIR})
-    find_package(FLTK 1.4 CONFIG REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE fltk::fltk fltk::images fltk::z)
     target_link_options(${PROJECT_NAME} PRIVATE ${LINKER_FLAGS})
     target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 elseif(LINUX)
     target_link_libraries(${PROJECT_NAME} PRIVATE
-        ${FLTKLIBDIR}/lib/libfltk.a
-        ${FLTKLIBDIR}/lib/libfltk_images.a
-        ${FLTKLIBDIR}/lib/libfltk_z.a
         Xft
         fontconfig
         Xrender
