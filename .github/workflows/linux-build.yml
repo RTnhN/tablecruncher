@@ -35,8 +35,17 @@ jobs:
       - name: Build Tablecruncher
         run: cmake --build build -- -j$(nproc)
 
-      - name: Upload artifact
+      - name: Package Debian
+        run: bash scripts/build_deb.sh
+
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: tablecruncher-linux
           path: build/dist
+
+      - name: Upload Debian package
+        uses: actions/upload-artifact@v4
+        with:
+          name: tablecruncher-deb
+          path: Tablecruncher_v*_Linux_x86_64.deb

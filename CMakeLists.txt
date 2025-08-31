@@ -56,9 +56,9 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-if(UNIX AND NOT APPLE)
-    set(LINUX TRUE)
-endif()
+# Platform detection helpers
+# CMake does not define a built-in `LINUX` variable. Use the standard
+# `UNIX` and `APPLE` checks directly for GNU/Linux specific logic.
 
 string(TIMESTAMP NOW "%Y-%m-%dT%H:%M")
 string(TIMESTAMP TODAY "%Y-%m-%d")
@@ -83,7 +83,7 @@ elseif(APPLE)
     endif()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -DMY_VERSION=\\\"${APP_VERSION}\\\" -DMY_YEAR=\\\"${YEAR}\\\" -DMY_TODAY=\\\"${TODAY}\\\" -DMY_NOW=\\\"${NOW}\\\" -mmacosx-version-min=${MACOS_VERSION} -D_THREAD_SAFE -D_REENTRANT")
     set(CMAKE_C_FLAGS "-mmacosx-version-min=${MACOS_VERSION}")
-elseif(LINUX)
+elseif(UNIX AND NOT APPLE)
     set(PLATFORM "Linux")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -DMY_VERSION=\\\"${APP_VERSION}\\\" -DMY_YEAR=\\\"${YEAR}\\\" -DMY_TODAY=\\\"${TODAY}\\\" -DMY_NOW=\\\"${NOW}\\\" -D_THREAD_SAFE -D_REENTRANT")
     if(APPIMAGE STREQUAL "1")
@@ -143,7 +143,7 @@ elseif(WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE fltk::fltk fltk::images fltk::z)
     target_link_options(${PROJECT_NAME} PRIVATE ${LINKER_FLAGS})
     target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
-elseif(LINUX)
+elseif(UNIX AND NOT APPLE)
     target_link_libraries(${PROJECT_NAME} PRIVATE
         ${FLTKLIBDIR}/lib/libfltk.a
         ${FLTKLIBDIR}/lib/libfltk_images.a
@@ -184,15 +184,15 @@ endif()
 
 
 
-if(FALSE)
+if(UNIX AND NOT APPLE)
     # Install binary
-    install(TARGETS tablecruncher RUNTIME DESTINATION bin)
+    install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 
     # Desktop entry
     install(FILES assets/linux/tablecruncher.desktop
         DESTINATION share/applications)
 
-    # App icon
+    # App icons
     install(FILES assets/linux/icons/64x64/tablecruncher.png
         DESTINATION share/icons/hicolor/64x64/apps)
 
@@ -201,6 +201,18 @@ if(FALSE)
 
     install(FILES assets/linux/icons/256x256/tablecruncher.png
         DESTINATION share/icons/hicolor/256x256/apps)
+
+    # CPack configuration for Debian package
+    set(CPACK_PACKAGE_NAME "tablecruncher")
+    set(CPACK_PACKAGE_VERSION "${APP_VERSION}")
+    set(CPACK_PACKAGE_CONTACT "Tablecruncher")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Tablecruncher")
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Fast CSV viewer and editor")
+    set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+    set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
+    set(CPACK_GENERATOR "DEB")
+    include(CPack)
 endif()
 
 
